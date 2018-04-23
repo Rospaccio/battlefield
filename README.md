@@ -1,4 +1,4 @@
-# Battlefield3D
+![Battlefield3d](src/main/resources/static/pics/logo_internal.png?raw=true)
 
 ## A minimal HTML5 multiplayer game based on BabylonJS and Spring Boot
 

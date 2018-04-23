@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:tiles="http://www.thymeleaf.org">
+    <head>
+        <title>Battlefield</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        
+        <link rel="stylesheet" 
+              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" 
+              crossorigin="anonymous"> </link>
+
+        <link rel="stylesheet" 
+              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" 
+              crossorigin="anonymous"></link>
+
+        <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
+        	crossorigin="anonymous"></script>        
+       	<script src="//cdn.jsdelivr.net/sockjs/1.0.3/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/oimo/1.0.9/oimo.min.js"></script>
+        <script src="https://cdn.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        
+        <script th:src="@{/conf/application_constants.js}"></script>
+        <script th:src="@{/js/ripple.js}"></script>
+        <script th:src="@{/js/pawn.js}"></script>
+        <script th:src="@{/js/battlefield3d.js}"></script>
+        <script th:src="@{/js/battlefieldMain.js}"></script>
+                
+        <style>
+            .battlefield {
+            	position: absolute;
+            	top		: 0;
+            	left	: 0;
+                width   : 100%;
+                height  : 100%;
+                touch-action: none;
+            }
+            #logo {
+			    position: absolute;
+			    top: 0;
+			    left: 0;
+			    max-width: 450px;
+            }
+            
+            #userPanel,
+            #logoutPanel,
+            #sound {
+				position: absolute;
+			    background: blue;
+			    min-width: 51px;
+			    right: 0px;
+			    padding: 6px;
+			    border: 4px solid white;
+			    border-right: none;
+			    border-radius: 50px 0px 0px 50px;
+			    padding-left: 16px;
+			    color: white;
+			    padding-bottom: 0px;            
+            }
+            
+            #userPanel {
+			    bottom: 107px;
+			    padding-bottom: 6px;
+			    font-weight: bold;
+            }
+            #logoutPanel {
+            	bottom: 58px;
+            }
+            #sound {
+            	bottom: 10px;
+            }
+                        
+			a {
+			    color: white;
+			    font-weight: bold;
+			    font-size: 22px;
+			}
+			a:hover,
+			a:visited,
+			a:active,
+			a:link {
+				color: white;
+			}
+			.not-active {
+			  pointer-events: none;
+			  cursor: default;
+			}			            
+        </style>
+    </head>
+    <body oncontextmenu="return false;"> 
+        <noscript>
+            <h2 style="color: #ff0000">
+                Seems your browser doesn't support Javascript! Websocket relies on Javascript being enabled. Please enable
+                Javascript and reload this page!
+            </h2>
+        </noscript>
+        <div>
+            <div id="graphContainer">
+                <canvas id="battlefieldCanvas" class="battlefield">
+                    
+                </canvas>
+            </div>
+        </div>
+        
+        <img id="logo" th:src="@{/pics/logo_internal.png}" />
+
+        <div id="userPanel">
+        	<i class="glyphicon glyphicon-user"></i>
+        		<span th:text="${#httpServletRequest.remoteUser}">UserName</span>
+        </div>
+
+        <div id="logoutPanel">
+        	<a th:href="@{/logout}" title="Leave the match">
+        		<i class="glyphicon glyphicon-log-out"></i>
+        			<span class="hide">Leave the match</span>
+        	</a>
+        </div>
+        
+        <div id="sound">
+        	<a id="soundlink" href="javascript:toggleMusic();" title="Sound on / off" class="not-active">
+        		<i id="soundicon" class="glyphicon glyphicon-volume-off"></i>
+        			<span class="hide">Sound on / off</span>
+        	</a>
+        </div>
+
+    </body>
+</html>

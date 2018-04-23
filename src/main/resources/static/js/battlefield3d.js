@@ -1,9 +1,9 @@
 (function () {    
     console.log("Battlefield 3D: initializing environment...");
     var B = BABYLON;
-    var BULLET_VELOCITY_SCALE_FACTOR = 40;
-    var PAWN_MASS = 1;
-    var BULLET_MASS = 10;
+    var BULLET_VELOCITY_SCALE_FACTOR = BATTLEFIELD_CONSTANTS.BULLET_VELOCITY_SCALE_FACTOR;
+    var PAWN_MASS = BATTLEFIELD_CONSTANTS.PAWN_MASS;
+    var BULLET_MASS = BATTLEFIELD_CONSTANTS.BULLET_MASS;
     
     this.stompClient = {};
     
@@ -78,6 +78,13 @@
 //        this.camera = new BABYLON.ArcRotateCamera("Camera", 0, Math.PI / 3, 50, BABYLON.Vector3.Zero(), this.scene);
 //        this.camera.setTarget(BABYLON.Vector3.Zero());
         
+        
+        // background image 
+        var background = new BABYLON.Layer("back", this.serverContextPath+"/pics/galaxy.jpg", this.scene);
+    	background.isBackground = true;
+    	background.texture.level = 0;
+    	background.texture.wAng = .2;
+        
         this.camera.attachControl(this.canvas, false);
         
         // lights
@@ -96,13 +103,17 @@
         var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("battlefieldGUI");
         this.advancedTexture = advancedTexture;
 
-        // create a built-in "ground" shape; 
-        var ground = B.Mesh.CreateGround('ground1', 40, 40, 2, this.scene);
-        var groundMaterial = new B.StandardMaterial('ground_metarial', this.scene);
+        
+        // create spaceship floor...
+        var damierTexture = new BABYLON.Texture(this.serverContextPath+"/pics/Scifi_texture_02.jpg", this.scene);
+        var groundMaterial = new BABYLON.StandardMaterial("groundMaterial", this.scene);
+        groundMaterial.diffuseTexture = damierTexture;        
         groundMaterial.diffuseColor = new B.Color3(0.2, 0.3, 0.1);
         groundMaterial.specularColor = new B.Color3(0.25, 0.35, 0.15);
         groundMaterial.backFaceCulling = false;
         
+        // create a spaceship "ground" shape; 
+        var ground = B.Mesh.CreateGround('ground1', 90, 45, 2, this.scene);        
         ground.material = groundMaterial;
         ground.receiveShadows = true;
         
@@ -110,9 +121,40 @@
                 ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, friction: 0.5, restitution: 0.7 }, this.scene);
         
          this.camera.lockedTarget = ground;
+
+         
+         
+         // background music...
+         this.isMusicPlaying = false;
+         this.music = new BABYLON.Sound("Music", this.serverContextPath+"/audio/main_theme.mp3", this.scene, function(){
+        	 self.music.setVolume(0.5);
+        	 self.toggleMusic();
+         }, { loop: true, autoplay: false });         
+         
+         
         // return the created scene
         return this.scene;
     };
+    
+    
+    Battlefield.prototype.toggleMusic = function(){
+    	if(this.music != undefined){
+    		if(this.isMusicPlaying){
+    			this.music.stop();
+    		} else {
+    			this.music.play();
+    		}
+    		this.isMusicPlaying = !this.isMusicPlaying;
+    		if(this.onToggleMusic !== undefined && typeof this.onToggleMusic == 'function'){
+    			this.onToggleMusic(this.isMusicPlaying);
+    		}
+    	}
+    }
+
+    Battlefield.prototype.changeUser = function(newUser){
+    	this.username = newUser;
+    	this.addPlayerPawn(this.username, 0, 0);
+    }
     
     Battlefield.prototype.addCube = function(x, y, z){
         var name = "cube_" + Math.random();
@@ -198,23 +240,15 @@
         text1.color = "white";
         label.addControl(text1);
         
+        pawn.addLinkedObj(label);
+        
         return pawn;
     };
     
     Battlefield.prototype.stop = function(){
         console.log("TODO: Implement stop function");
     };
-    
-    Battlefield.prototype.sendAddMyPlayerMessage = function(stompClient){
-        console.log("About to send addMessage to add current player");
-        var message = {
-            username: this.username,
-            x: 0,
-            y: 0
-        };
-        this.sendMessage("/app/join", {}, message);
-    };
-    
+        
     Battlefield.prototype.sendMoveMyPawnCommand = function(pickedPoint){
       var message = {
           username: this.username,
@@ -237,20 +271,21 @@
     
     Battlefield.prototype.sendSyncCommand = function(){
         var playerPawn = this.pawns[this.username];
-        var velocity = playerPawn.cubeMesh.physicsImpostor.getLinearVelocity();
-        var message = {
-            username: this.username,
-            
-            velocityX: velocity.x,
-            velocityY: velocity.y,
-            velocityZ: velocity.z,
-            
-            x: playerPawn.cubeMesh.position.x,
-            y: playerPawn.cubeMesh.position.y,
-            z: playerPawn.cubeMesh.position.z
-        };
         
-        if(this.stompClient){
+        if(this.stompClient && this.stompClient.connected && playerPawn !== undefined){
+	        var velocity = playerPawn.cubeMesh.physicsImpostor.getLinearVelocity();
+	        var message = {
+	            username: this.username,
+	            
+	            velocityX: velocity.x,
+	            velocityY: velocity.y,
+	            velocityZ: velocity.z,
+	            
+	            x: playerPawn.cubeMesh.position.x,
+	            y: playerPawn.cubeMesh.position.y,
+	            z: playerPawn.cubeMesh.position.z
+	        };
+	        
             this.sendMessage("/app/sync", {}, message);
         }
     };
@@ -270,11 +305,21 @@
     Battlefield.messageHandlers = {
         "add": function(payload){
             console.log("Add command handler: ", payload);
-            if(payload.username === this.username){
-                this.addPlayerPawn(payload.username, payload.x, payload.y);
-                return;
+            //if(payload.username === this.username && this.playerPawn == {}){
+            //    this.addPlayerPawn(payload.username, payload.x, payload.y);
+            //    return;
+            //}
+            if(payload.username !== this.username){
+            	this.addOtherPawn(payload.username, payload.x, payload.y);
             }
-            this.addOtherPawn(payload.username, payload.x, payload.y);
+        },
+        
+        "quit": function(payload){
+        	console.log("Quit command handler: ", payload);
+        	if(payload.username !== this.username && this.pawns.hasOwnProperty(payload.username)){
+        		this.pawns[payload.username].die();
+        		delete this.pawns[payload.username];
+        	}
         },
         
         "move": function(payload){

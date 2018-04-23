@@ -1,50 +1,103 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:tiles="http://www.thymeleaf.org">
     <head>
         <title>Battlefield 3D</title>
+        
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
-        <!-- Latest compiled and minified CSS -->
+        
         <link rel="stylesheet" 
               href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" 
               crossorigin="anonymous"> </link>
 
-        <!-- Optional theme -->
         <link rel="stylesheet" 
               href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" 
               crossorigin="anonymous"></link>
-
-        <!-- Latest compiled and minified JavaScript -->
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
-        crossorigin="anonymous"></script>
-
+		
+		<style>
+			#logo {
+				margin-bottom: 30px;			
+			}
+			#logo img {
+				max-width: 90%;
+			}
+			#logo h4 {
+			    margin-top: -31px;
+			    margin-left: 248px;
+			}
+			.well input {
+			    width: 100%;
+			}
+			.well .btn {
+				width: 100%;
+				display: block;
+				margin-top: 7px;
+			}
+			.alert {
+			    padding: 4px;
+			    margin-bottom: 4px;
+			}			
+			@media screen and (max-width: 579px) {
+				#logo h4 {
+				    margin-top: 5px;
+				    margin-left: 0px;
+				    text-align: center;
+				}				
+			}
+		</style>
+		
     </head>
     <body>
         <div class="container">
-            <h1>Battlefield 3D</h1>
-            <h2>A minimal HTML5 multiplayer game based on BabylonJS and WebSocket</h2>
-            <div>
-                <div th:if="${user == null}">
-                    <form th:action="@{/login}" method="post">
-                        <h3>Choose your username</h3>
-                        <div>
-                            <label for="username">Username: </label>
-                            <input type="text" id="username" name="username"></input>
-                        </div>
-                        <input type="submit" id="join" value="Join"></input>
-                    </form>
-                </div>
-                <div th:if="${user != null}">
-                    <form th:action="@{/custom-logout}" method="post">
-                        <input type="submit" id="customLogout" value="Logout"></input>
-                    </form>
-                </div>
-                <div th:if="${errorMessage != null}">
-                    <div class="alert alert-danger" th:text="${errorMessage}">
-                    </div>
-                </div>
+            <div id="logo">
+	            <img th:src="@{/pics/logo.png}" alt="Battlefield 3D" />
+	            <h4>A minimal HTML5 multiplayer game based on BabylonJS and WebSocket</h4>
             </div>
+            
+            <!-- Regular login form -->
+			<div class="row justify-content-md-center" th:if="${userUnavailable != '*'}">
+			  <div class="col col-md-4 col-sm-5"></div>
+			  <div class="col col-md-3 col-sm-4">
+	            <div class="well">
+	                <form th:action="@{/login}" method="post">
+	                    <div>
+	                        <label for="username" class="hide">Username: </label>
+	                        <input type="text" id="username" name="username" placeholder="Choose your username" autocomplete="off" required="" />
+	                    </div>
+	                    <button type="submit" class="btn btn-primary" id="join">
+	                    	<i class="glyphicon glyphicon-log-in"></i> Join</button>
+	                </form>
+	            </div>
+			  </div>
+			</div>
+			
+			<!-- User unavailable message -->
+			<div class="row justify-content-md-center" th:if="${userUnavailable == '*'}">
+			  <div class="col col-md-3 col-sm-4"></div>
+			  <div class="col col-md-4 col-sm-5">
+	            <div class="well">
+	            	<div class="alert alert-danger">User not available</div>
+	            	<p>The chosen user is already connected to the battlefield arena.
+						To continue, you must choose a different one or
+						wait for the end of current session.
+	            	<br/></p>
+					<div>
+						<a class="btn btn-primary" th:href="@{/logout}">
+							<i class="glyphicon glyphicon-off"></i> Change username</a>
+						
+						<a class="btn btn-info" th:href="@{/}">
+							<i class="glyphicon glyphicon-refresh"></i> Retry</a>
+					</div>	            	
+	            </div>
+			  </div>
+			</div>
+						                        
         </div>
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
+        	crossorigin="anonymous"></script>
+        
     </body>
 </html>

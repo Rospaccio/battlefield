@@ -17,6 +17,7 @@ var PAWN_IMPULSE_SCALE_FACTOR = 20;
     
     Pawn.prototype.init = function(name, x, z, scene){
         this.object = {};
+        this.linkedObjs = [];
         var cube = BABYLON.MeshBuilder.CreateBox(name,
             {size: PAWN_SIZE}, scene);
         cube.position.y = PAWN_SIZE / 2;
@@ -29,6 +30,17 @@ var PAWN_IMPULSE_SCALE_FACTOR = 20;
                 cube, B.PhysicsImpostor.BoxImpostor, {mass: PAWN_MASS, friction: PAWN_FRICTION, restitution: 1}, this.scene);
         this.cubeMesh = cube;
     };
+    
+    
+    /*
+	 * babilonjs does not destroy related objects to mesh (the labels, for example),
+	 * so I am forced to manage a list of this objects that I will then go to explicitly destroy
+     */
+    Pawn.prototype.addLinkedObj = function(obj){
+    	if(obj !== undefined && obj.dispose !== undefined && typeof obj.dispose === 'function'){
+    		this.linkedObjs.push(obj);
+    	}
+    };    
     
     Pawn.prototype.update = function(){
         if(this.cubeMesh.position.y < 0){
@@ -62,7 +74,22 @@ var PAWN_IMPULSE_SCALE_FACTOR = 20;
     };
     
     Pawn.prototype.die = function () {
-        this.scene.removeMesh(this.object);
+        //this.scene.removeMesh(this.object);
+    	
+    	/*
+    	 * destroy cube, cannon and all related objects
+    	 */
+        if(this.cubeMesh !== undefined && this.cubeMesh.dispose !== undefined && typeof this.cubeMesh.dispose === 'function'){
+        	this.cubeMesh.dispose();
+        }
+        if(this.cannonMesh !== undefined && this.cannonMesh.dispose !== undefined && typeof this.cannonMesh.dispose === 'function'){
+        	this.cannonMesh.dispose();
+        }
+        
+        while((o = this.linkedObjs.pop()) !== undefined){
+        	o.dispose();
+        }
+        
         if (this.listener && this.listener.onPawnDead && typeof (this.listener.onPawnDead) === 'function') {
             this.listener.onPawnDead(this);
         }

@@ -1,12 +1,11 @@
 (function(){
     console.log("Initializing game instance");
     
-    var SYNC_TIMEOUT_MILLIS = 2000;
-    var SERVER_CONTEXT_PATH = "/battlefield3d";
+    var SYNC_TIMEOUT_MILLIS = BATTLEFIELD_CONSTANTS.SYNC_TIMEOUT_MILLIS;
+    var SERVER_CONTEXT_PATH = BATTLEFIELD_CONSTANTS.SERVER_CONTEXT_PATH;
     
     var stompClient = {};
         
-    // TODO: make the second argument (servercontextPath) not hardcoded...
     battlefield = new Battlefield('battlefieldCanvas', SERVER_CONTEXT_PATH);
     
     window.addEventListener('DOMContentLoaded', function(){
@@ -17,6 +16,18 @@
     window.addEventListener('resize', function () {
         battlefield.engine.resize();
     });
+    
+    battlefield.onToggleMusic = function(isPlaying){
+    	$('#soundlink').removeClass("not-active");
+    	if(isPlaying){
+    		$('#soundicon').removeClass("glyphicon-volume-off");
+    		$('#soundicon').addClass("glyphicon-volume-up");
+    	} else {
+    		$('#soundicon').removeClass("glyphicon-volume-up");
+    		$('#soundicon').addClass("glyphicon-volume-off");    		
+    	}
+    }
+    
     
     function sync(){
         battlefield.sendSyncCommand();
@@ -29,17 +40,21 @@
         console.log("connecting to the WebSocket controller");
         var socket = new SockJS(SERVER_CONTEXT_PATH + '/battlefield');
         stompClient = Stomp.over(socket);
-        stompClient.connect({}, onConnectionEstablished);
-        battlefield.stompClient = stompClient;
+        stompClient.connect({}, onConnectionEstablished, onConnectionError);
+        battlefield.stompClient = stompClient;      
     };
     
     onConnectionEstablished = function(frame) {
         console.log("Connected to '/battlefield', frame = :", frame);
         stompClient.subscribe("/topic/battlefield", onMessageReceived);
         var username = frame.headers["user-name"];
-        battlefield.username = username;
-        battlefield.sendAddMyPlayerMessage(stompClient);    
+        battlefield.changeUser(username);   
         setTimeout(sync, SYNC_TIMEOUT_MILLIS);
+    };
+    
+    onConnectionError = function(error) {
+    	console.log("Socket connection error: "+error);
+    	window.location = SERVER_CONTEXT_PATH + "/logout";
     };
     
     onMessageReceived = function(message){
@@ -57,5 +72,9 @@
         }
         console.log("Disconnected");
     };
+    
+    toggleMusic = function(){
+    	battlefield.toggleMusic();
+    }
     
 })();
